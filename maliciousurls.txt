@@ -1,0 +1,56 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+# Reading data from .csv file to dataframe
+df = pd.read_csv('security.csv')
+df.columns
+df.head(10)
+df.info()
+# Checking the numbers of unique values in each column
+df.nunique()
+df['WHOIS_COUNTRY'].unique()
+df['WHOIS_REG_YEAR'].unique()
+df['UPDATE_YEAR'].unique()
+sns.countplot(data=df, x='WHOIS_REG_YEAR', hue='TYPE')
+sns.countplot(data=df, x='UPDATE_YEAR', hue='TYPE')
+sns.countplot(data=df, x='WHOIS_COUNTRY', hue='TYPE')
+df.columns
+df.head(5)
+# Numbers of unique values in string columns:
+
+df[['URL','DOMAIN_NAME','CHARSET', 'SERVER', 'CACHE_CONTROL','WHOIS_COUNTRY','WHOIS_STATE_CITY']].nunique()
+# Since the target column "TIPO" currently has string values i'm going to write a function to replace them with 1's and 0's
+
+def target(type):
+    if type == "Benigna":
+        return 0
+    else:
+        return 1
+# Applying function to the column:
+
+df['TYPE'] = df['TYPE'].apply(target)
+df['TYPE'].head(20)
+# I'm going to create dummy values out of string columns to be able to use it for classification using ML:
+
+moddf = pd.get_dummies(df, columns=['URL','DOMAIN_NAME','CHARSET', 'SERVER', 'CACHE_CONTROL','WHOIS_COUNTRY','WHOIS_STATE_CITY'])
+moddf.columns
+# Splitting data into training and testing sets using train_test_split
+from sklearn.model_selection import train_test_split
+X = moddf.drop(axis=1, columns=['TYPE'])
+X.head(5)
+y = moddf['TYPE']
+y.head(5)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=100)
+from sklearn.linear_model import LogisticRegression
+logr = LogisticRegression()
+logr.fit(X_train, y_train)
+pred = logr.predict(X_test)
+# Importing metrics modules to evaluate the the model
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+print(classification_report(y_test, pred))
+print('\n')
+print(confusion_matrix(y_test, pred))
+print(accuracy_score(y_test, pred)*100)
